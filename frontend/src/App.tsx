@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useDashboard } from './adapters/ui/hooks/useDashboard';
 import { Navbar } from './adapters/ui/components/Navbar';
@@ -7,12 +7,25 @@ import { RoutesTab } from './adapters/ui/pages/RoutesTab';
 import { CompareTab } from './adapters/ui/pages/CompareTab';
 import { BankingTab } from './adapters/ui/pages/BankingTab';
 import { PoolingTab } from './adapters/ui/pages/PoolingTab';
+import { TabId } from './shared/types'; // Import the TabId type
 
 function App() {
   // We initialize the dashboard state here, at the top level.
-  // This ensures the state is shared across all dashboard pages
-  // and is not lost when navigating between them.
+  // This ensures the state is shared across all dashboard pages.
   const dashboardProps = useDashboard();
+  const { state, actions, isLoading, setActiveTab } = dashboardProps;
+
+  // This component wraps each page. On mount, it tells the useDashboard
+  // hook which tab is "active", which triggers the correct data fetch
+  // from the useEffect inside the hook.
+  const PageDataWrapper: React.FC<{ tabId: TabId; children: React.ReactNode }> = ({ tabId, children }) => {
+    useEffect(() => {
+      // Tell the hook which page is now active
+      setActiveTab(tabId);
+    }, [tabId]); // Only runs when the page (tabId) changes
+
+    return <>{children}</>;
+  };
 
   return (
     <div className="bg-gray-50 min-h-screen">
@@ -27,22 +40,59 @@ function App() {
             <Route path="/" element={<HomePage />} />
 
             {/* Dashboard Routes */}
-            {/* We pass the same dashboardProps to each page */}
+            {/* FIX 1: We wrap each page in PageDataWrapper to trigger the 
+                     correct data fetch for that page.
+              FIX 2: We now pass the *correct* props to each component
+                     from the hook's 'state' and 'actions' objects.
+            */}
             <Route
               path="/routes"
-              element={<RoutesTab {...dashboardProps} />}
+              element={
+                <PageDataWrapper tabId="routes">
+                  <RoutesTab
+                    routes={state.routes}
+                    onSetBaseline={actions.handleSetBaseline}
+                    isLoading={isLoading}
+                  />
+                </PageDataWrapper>
+              }
             />
             <Route
               path="/compare"
-              element={<CompareTab {...dashboardProps} />}
+              element={
+                <PageDataWrapper tabId="compare">
+                  <CompareTab
+                    comparison={state.comparison}
+                    isLoading={isLoading}
+                  />
+                </PageDataWrapper>
+              }
             />
             <Route
               path="/banking"
-              element={<BankingTab {...dashboardProps} />}
+              element={
+                <PageDataWrapper tabId="banking">
+                  <BankingTab
+                    kpis={state.bankingKpis}
+                    records={state.bankRecords}
+                    onBank={actions.handleBankSurplus}
+                    onApply={actions.handleApplyDeficit}
+                    isLoading={isLoading}
+                  />
+                </PageDataWrapper>
+              }
             />
             <Route
               path="/pooling"
-              element={<PoolingTab {...dashboardProps} />}
+              element={
+                <PageDataWrapper tabId="pooling">
+                  <PoolingTab
+                    poolResult={state.poolResult}
+                    onCreatePool={actions.handleCreatePool}
+                    isLoading={isLoading}
+                  />
+                </PageDataWrapper>
+              }
             />
 
             {/* Redirect any unknown paths to the homepage */}
