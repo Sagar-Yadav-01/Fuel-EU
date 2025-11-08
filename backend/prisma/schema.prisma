@@ -1,0 +1,81 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// 1. Routes table
+// Stores individual voyage/route data
+model Route {
+  id              String   @id @default(uuid())
+  routeId         String   @unique // User-facing ID like R001
+  vesselType      String
+  fuelType        String
+  year            Int
+  ghgIntensity    Float // Actual GHG Intensity
+  fuelConsumption Float
+  distance        Float
+  totalEmissions  Float
+  isBaseline      Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  // A shipId to link route data to a specific ship/owner
+  // This is implicit in the prompt, but needed for compliance
+  shipId String @default("S001") // Using a default shipId for this demo
+}
+
+// 2. Ship Compliance table
+// Stores the calculated Compliance Balance (CB) for a ship per year
+model ShipCompliance {
+  id           String   @id @default(uuid())
+  shipId       String
+  year         Int
+  cb_gco2eq    Float // Compliance Balance in gCO2eq
+  cb_adjusted  Float? // CB after banking/pooling
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([shipId, year])
+}
+
+// 3. Bank Entries table
+// Stores records of banked surplus or applied deficit
+model BankEntry {
+  id             String   @id @default(uuid())
+  shipId         String
+  year           Int // The year the action was taken
+  amount_gco2eq  Float // Positive for banking, negative for applying
+  type           String // "bank" or "apply"
+  createdAt      DateTime @default(now())
+}
+
+// 4. Pools table
+// Represents a compliance pool for a given year
+model Pool {
+  id        String       @id @default(uuid())
+  year      Int
+  createdAt DateTime     @default(now())
+  members   PoolMember[]
+
+  @@unique([year]) // Assuming one pool per year for this demo
+}
+
+// 5. Pool Members table
+// Junction table linking ships to a pool for a specific year
+model PoolMember {
+  id        String   @id @default(uuid())
+  poolId    String
+  pool      Pool     @relation(fields: [poolId], references: [id])
+  shipId    String
+  cb_before Float // The ship's CB before pooling
+  cb_after  Float // The ship's CB after pooling allocation
+  createdAt DateTime @default(now())
+
+  @@unique([poolId, shipId])
+}
