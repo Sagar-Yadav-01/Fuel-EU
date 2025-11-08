@@ -1,82 +1,56 @@
-import { Layout } from './adapters/ui/components/Layout';
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { useDashboard } from './adapters/ui/hooks/useDashboard';
-import { TabId } from './shared/types';
+import { Navbar } from './adapters/ui/components/Navbar';
+import { HomePage } from './adapters/ui/pages/HomePage';
 import { RoutesTab } from './adapters/ui/pages/RoutesTab';
 import { CompareTab } from './adapters/ui/pages/CompareTab';
 import { BankingTab } from './adapters/ui/pages/BankingTab';
 import { PoolingTab } from './adapters/ui/pages/PoolingTab';
-import { List, BarChart2, PiggyBank, Users, RefreshCw } from 'lucide-react';
-
-const tabs: { id: TabId; name: string; icon: React.ReactNode }[] = [
-  { id: 'routes', name: 'Routes & Baseline', icon: <List size={18} /> },
-  { id: 'compare', name: 'Compare', icon: <BarChart2 size={18} /> },
-  { id: 'banking', name: 'Banking', icon: <PiggyBank size={18} /> },
-  { id: 'pooling', name: 'Pooling', icon: <Users size={18} /> },
-];
 
 function App() {
-  const { activeTab, setActiveTab, isLoading, error, state, actions } = useDashboard();
-
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case 'routes':
-        return <RoutesTab routes={state.routes} onSetBaseline={actions.handleSetBaseline} isLoading={isLoading} />;
-      case 'compare':
-        return <CompareTab comparison={state.comparison} isLoading={isLoading} />;
-      case 'banking':
-        return <BankingTab kpis={state.bankingKpis} records={state.bankRecords} onBank={actions.handleBankSurplus} onApply={actions.handleApplyDeficit} isLoading={isLoading} />;
-      case 'pooling':
-        return <PoolingTab poolResult={state.poolResult} onCreatePool={actions.handleCreatePool} isLoading={isLoading} />;
-      default:
-        return null;
-    }
-  };
+  // We initialize the dashboard state here, at the top level.
+  // This ensures the state is shared across all dashboard pages
+  // and is not lost when navigating between them.
+  const dashboardProps = useDashboard();
 
   return (
-    <Layout>
-      <div className="bg-white rounded-lg shadow-lg p-6 min-h-[70vh]">
-        {/* Tab Navigation */}
-        <div className="flex justify-between items-center border-b border-gray-200 pb-4 mb-6">
-          <nav className="flex space-x-2">
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center space-x-2 px-4 py-2 font-medium text-sm rounded-md ${
-                  activeTab === tab.id
-                    ? 'bg-navy text-white shadow-md'
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                {tab.icon}
-                <span>{tab.name}</span>
-              </button>
-            ))}
-          </nav>
-          <button
-            onClick={actions.refresh}
-            disabled={isLoading}
-            className="flex items-center space-x-2 px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 disabled:opacity-50"
-          >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-            <span>{isLoading ? 'Loading...' : 'Refresh'}</span>
-          </button>
-        </div>
-        
-        {/* Error Display */}
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md mb-6" role="alert">
-            <strong className="font-bold">Error: </strong>
-            <span className="block sm:inline">{error}</span>
-          </div>
-        )}
+    <div className="bg-gray-50 min-h-screen">
+      {/* Navbar is rendered outside the Routes, so it's on every page */}
+      <Navbar />
 
-        {/* Tab Content */}
-        <div>
-          {renderTabContent()}
+      {/* Main content area, with padding-top to offset the fixed navbar */}
+      <main className="pt-20">
+        <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+          <Routes>
+            {/* Homepage Route */}
+            <Route path="/" element={<HomePage />} />
+
+            {/* Dashboard Routes */}
+            {/* We pass the same dashboardProps to each page */}
+            <Route
+              path="/routes"
+              element={<RoutesTab {...dashboardProps} />}
+            />
+            <Route
+              path="/compare"
+              element={<CompareTab {...dashboardProps} />}
+            />
+            <Route
+              path="/banking"
+              element={<BankingTab {...dashboardProps} />}
+            />
+            <Route
+              path="/pooling"
+              element={<PoolingTab {...dashboardProps} />}
+            />
+
+            {/* Redirect any unknown paths to the homepage */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
         </div>
-      </div>
-    </Layout>
+      </main>
+    </div>
   );
 }
 
