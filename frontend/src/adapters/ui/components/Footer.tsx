@@ -11,13 +11,13 @@ const quickLinks = [
 
 const contactInfo = [
   { 
-    name: 'contact@fueleu.example.com', 
+    name: 'info@varunamarine.eu', 
     href: 'mailto:contact@fueleu.example.com', 
     icon: Mail,
     aria: 'Email us' 
   },
   { 
-    name: '+1 (234) 567-890', 
+    name: '+1 31107640935', 
     href: 'tel:+1234567890', 
     icon: Phone,
     aria: 'Call us'
