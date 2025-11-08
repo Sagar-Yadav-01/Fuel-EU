@@ -7,6 +7,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        'page-bg': '#e6f5f2', // <-- ADDED THIS LINE
         'navy': {
           'light': '#3a5a8a',
           'DEFAULT': '#2c4a75',

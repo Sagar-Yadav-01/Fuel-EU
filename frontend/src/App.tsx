@@ -8,6 +8,7 @@ import { CompareTab } from './adapters/ui/pages/CompareTab';
 import { BankingTab } from './adapters/ui/pages/BankingTab';
 import { PoolingTab } from './adapters/ui/pages/PoolingTab';
 import { TabId } from './shared/types'; // Import the TabId type
+import { Footer } from './adapters/ui/components/Footer'; // <-- 1. IMPORT FOOTER
 
 function App() {
   // We initialize the dashboard state here, at the top level.
@@ -28,12 +29,14 @@ function App() {
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    // 2. UPDATED FOR STICKY FOOTER LAYOUT
+    <div className="bg-page-bg min-h-screen flex flex-col">
       {/* Navbar is rendered outside the Routes, so it's on every page */}
       <Navbar />
 
       {/* Main content area, with padding-top to offset the fixed navbar */}
-      <main className="pt-20">
+      {/* 3. ADDED 'flex-grow' */}
+      <main className="pt-20 flex-grow">
         <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
           <Routes>
             {/* Homepage Route */}
@@ -79,7 +82,7 @@ function App() {
                     onApply={actions.handleApplyDeficit}
                     isLoading={isLoading}
                   />
-                </PageDataWrapper>
+                </PageDataWrapper> 
               }
             />
             <Route
@@ -100,6 +103,9 @@ function App() {
           </Routes>
         </div>
       </main>
+
+      {/* 4. ADD FOOTER */}
+      <Footer />
     </div>
   );
 }
